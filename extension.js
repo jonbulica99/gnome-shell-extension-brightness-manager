@@ -2,6 +2,7 @@ const Lang = imports.lang;
 const Gio = imports.gi.Gio;
 const GLib = imports.gi.GLib;
 const St = imports.gi.St;
+const Clutter = imports.gi.Clutter;
 const Main = imports.ui.main;
 const Mainloop = imports.mainloop;
 const PanelMenu = imports.ui.panelMenu;
@@ -64,25 +65,27 @@ const BrightnessManager = new Lang.Class({
         this.parent(0.0, "Brightness Manager");
         this.setSensitive(true);
 
-        this.settings = new Gio.Settings({schema_id: 'org.gnome.desktop.interface'});
+        this.settings = new Gio.Settings({ schema_id: 'org.gnome.desktop.interface' });
         this.settings.connect('changed::text-scaling-factor', Lang.bind(this, this.onSettingsChanged));
         this.currentValue = this.settings.get_double(TEXT_SCALING_FACTOR_KEY);
 
-        this.hbox = new St.BoxLayout({style_class: 'panel-status-menu-box'});
+        this.hbox = new St.BoxLayout({ style_class: 'panel-status-menu-box' });
         this.hbox.add_child(new St.Icon({
             style_class: 'system-status-icon',
             icon_name: 'dialog-information-symbolic'
         }));
         this.actor.add_child(this.hbox);
+        this.actor.connect('scroll-event', Lang.bind(this, this.onMenuScrollEvent));
 
         this._menu = new PopupMenu.PopupMenu(this.actor, 0.0, St.Side.BOTTOM);
         this.setMenu(this._menu);
 
-        this.menuItem = new PopupMenu.PopupBaseMenuItem({activate: true});
+
+        this.menuItem = new PopupMenu.PopupBaseMenuItem({ activate: true });
         this.menuItem.actor.connect('key-press-event', Lang.bind(this, this.onMenuItemKeyPressed));
         this._menu.addMenuItem(this.menuItem);
 
-        this.textEntry = new St.Entry({style_class: 'input-text'});
+        this.textEntry = new St.Entry({ style_class: 'input-text' });
         this.updateTextEntry(DEFAULT_VALUE);
         this.textEntry.clutter_text.connect('activate', Lang.bind(this, this.onEntryActivated));
         this.textEntry.clutter_text.connect('key-focus-out', Lang.bind(this, this.onEntryKeyFocusOut));
@@ -116,6 +119,25 @@ const BrightnessManager = new Lang.Class({
 
     onEntryKeyFocusOut: function (entry) {
         this.updateValueFromTextEntry(entry);
+    },
+
+    onMenuScrollEvent: function (actor, event) {
+        let direction = event.get_scroll_direction();
+        let step = 5;
+        if (direction == Clutter.ScrollDirection.DOWN) {
+            step = parseInt(-step);
+        } else if (direction == Clutter.ScrollDirection.UP) {
+            step = parseInt(step);
+        } else {
+            return;
+        }
+
+        value = normalizeNumber(this.currentValue + step);
+        if (!isNaN(value)) {
+            this.updateBrightnessValue(value);
+            this.updateSlider(descaleNumber(value));
+            this.updateTextEntry(value.toString());
+        }
     },
 
     updateValueFromTextEntry: function (entry) {
@@ -174,11 +196,12 @@ const BrightnessManager = new Lang.Class({
 
     setLCDBrightness: function (deviceIndex, value) {
         var device = this.devices[deviceIndex];
-        Util.spawn(['sudo', 'ddccontrol', device, '-r', '0x10', '-w', value]);
+        //Util.spawn(['sudo', 'ddccontrol', device, '-r', '0x10', '-w', value]);
+        this.executeCommand("sudo ddccontrol " + device + " -r 0x10 -w " + value + " 2> /dev/null");
     },
 
     queryDevices: function () {
-        var devices = this.executeCommand('sudo ddccontrol -p | grep -i device:');
+        var devices = this.executeCommand('sudo ddccontrol -p  2> /dev/null | grep -i device:');
 
         devices = devices.replace(/\r?\n|\r| */g, '').replace(/-Device:/g, ',').split(",");
         devices.shift();

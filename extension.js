@@ -74,6 +74,11 @@ const BrightnessManager = new Lang.Class({
             style_class: 'system-status-icon',
             icon_name: 'dialog-information-symbolic'
         }));
+        this.statusLabel = new St.Label({
+            y_align: Clutter.ActorAlign.CENTER,
+            text: this._labelText()
+        });
+        this.hbox.add_child(this.statusLabel);
         this.actor.add_child(this.hbox);
         this.actor.connect('scroll-event', Lang.bind(this, this.onMenuScrollEvent));
 
@@ -103,6 +108,9 @@ const BrightnessManager = new Lang.Class({
         this.resetValueItem = new PopupMenu.PopupMenuItem(_("Reset to default value"));
         this.resetValueItem.connect('activate', Lang.bind(this, this.onResetValueActivate));
         this._menu.addMenuItem(this.resetValueItem);
+    },
+    _labelText: function () {
+        return this.currentValue.toString();
     },
 
     onSettingsChanged: function (settings, key) {
@@ -167,6 +175,7 @@ const BrightnessManager = new Lang.Class({
 
     updateBrightnessValue: function (value) {
         this.currentValue = value;
+        this.statusLabel.set_text(this._labelText());
 
         if (this.timeoutId == 0) {
             this.timeoutId = Mainloop.timeout_add(TIME_OUT, Lang.bind(this, this.onTimeout));

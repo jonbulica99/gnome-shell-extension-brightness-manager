@@ -12,10 +12,11 @@
 		"3.14",
 		"3.16",
 		"3.18",
-		"3.20"
+		"3.20",
+		"3.30"
 	],
 
-	"url": "https://github.com/vrodmz/gnome-shell-extension-brightness-manager",
+	"url": "https://github.com/jonbulica99/gnome-shell-extension-brightness-manager",
 	"uuid": "brightness-manager@vrodmz.co",
-	"version": 1
+	"version": 2
 }

@@ -13,7 +13,8 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 const Convenience = Me.imports.convenience;
 const Gettext = imports.gettext.domain('text-scaler');
 const _ = Gettext.gettext;
-const DEFAULT_VALUE = 75;
+
+const DEFAULT_VALUE = 0;
 const MIN_VALUE = 0;
 const MAX_VALUE = 100;
 const NUM_DECIMALS = 0;
@@ -70,7 +71,7 @@ const BrightnessManager = new Lang.Class({
         this.hbox = new St.BoxLayout({style_class: 'panel-status-menu-box'});
         this.hbox.add_child(new St.Icon({
             style_class: 'system-status-icon',
-            icon_name: 'preferences-desktop-multimedia'
+            icon_name: 'dialog-information-symbolic'
         }));
         this.actor.add_child(this.hbox);
 
